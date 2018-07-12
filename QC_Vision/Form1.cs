@@ -7,14 +7,367 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MySql.Data.MySqlClient;
+using System.IO;
+
+
 
 namespace QC_Vision
 {
-    public partial class Form1 : Form
+
+    
+    public partial class OperatorScreen : Form
     {
-        public Form1()
+        public OperatorScreen()
         {
+
             InitializeComponent();
+        }
+        
+
+        //Load the data from a cubbyhole button. All buttons are linked to this function, sender argument is used to determine which cubby is pressed
+        private void loadCubbyData(object sender, EventArgs e)
+        {
+            //Clear defect list
+            defectList.Items.Clear();
+            string timestamp = "";
+            string filepath = "";
+            string lazyHolder = "";
+            string tempHolder = "";
+            bool lastDir = true;
+
+            cavityNumber.ImageLocation = "";
+
+            //Get sender data
+            Button tempButton = (Button)sender;
+
+
+            //Check if a cavity in the tray was selected
+            if (tempButton.BackColor == Color.White)
+            {
+                return;
+            }
+
+            //Establish database connection
+            DBConnect database = new DBConnect();
+
+
+            MySqlDataReader dataReader = database.Select("Select * from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and cubbyholenumber = \"" + tempButton.Text + "\" and passfail > 0" );
+
+            //Load defect list
+            while (dataReader.Read())
+            {
+                defectList.Items.Add(dataReader.GetString("Measurement") + " : " + Math.Round(dataReader.GetDouble("Result") * dataReader.GetDouble("Adjustment_factor") + dataReader.GetDouble("offset"), 3));
+            }
+
+            dataReader.Close();
+
+
+
+            //Load timestamp. This cannot be done as the previous reader, as a null is returned on empty defects
+            dataReader = database.Select("Select * from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and cubbyholenumber = \"" + tempButton.Text + "\" limit 1");
+            dataReader.Read();
+
+            timestamp = dataReader.GetString("timestamp");
+
+            /*This section of code is for the image search. The images are broken up into subfolders, with approx 100 images per sub folder. Each image is timestamped at the time taken, and each subfolder is timestamped with time created
+             * The code iterates through the subfolders to find the folder immediately following the timestamp. After this is found, it indicates the timestamp is in the folder immediately before this one. It then iterates through the pictures
+             * in a similar manner.
+             * 
+             * NB: This is a terribly designed timestamping/filing system, but it's what the machine was configured with. Consider refactoring ASAP.
+             * 
+             */
+
+            //Find whether part is a stem or housing
+            if (partLabel.Text.Substring(0, 2) == "04")
+            {
+                filepath = "Q:\\StemCavityNumber";
+            }
+            else
+            {
+                filepath = "Q:\\HousingFrontCavityNumber";
+            }
+
+
+            //Unify timestamp format
+            timestamp.Replace(" ", "_");
+
+
+            //Iterate through folders
+            foreach (string d in Directory.GetDirectories(filepath))
+            {
+
+                tempHolder = d.Substring(d.LastIndexOf("\\") + 1);
+                if (tempHolder.CompareTo(timestamp) < 0)
+                {
+                    lazyHolder = tempHolder;
+
+                }
+                else
+                {
+                    filepath = filepath + "\\" + lazyHolder;
+                    lastDir = false;
+                    break;
+                }
+            }
+
+
+            //Flag to detect if picture is in latest folder
+            if(lastDir)
+            {
+                filepath = filepath + "\\" + lazyHolder;
+            }
+
+            lastDir = true;
+
+
+            //Iterate through files
+            foreach (string d in Directory.GetFiles(filepath))
+            {
+
+                tempHolder = d.Substring(d.LastIndexOf("\\") + 1);
+                if (tempHolder.CompareTo(timestamp) < 0)
+                {
+                    lazyHolder = tempHolder;
+                }
+                else
+                {
+                    //This section checks if the timestamp detected is within 5 seconds of the timestamp of the part. Due to the way the timestamps are assigned to the part vs the picture, there can
+                    //be a desynced, with the timestamp slightly before or after the part. If the parts are displaying the picture of the part, consider lowering the threshold from 5.
+
+                    if (Math.Abs(Int32.Parse(tempHolder.Substring(17, 2)) - Int32.Parse(timestamp.Substring(17, 2))) < 5)
+                        {
+                        filepath = filepath + "\\" + tempHolder;
+                    }
+                    else
+                    {
+                        filepath = filepath + "\\" + lazyHolder;
+                    }
+                    lastDir = false;
+                    break;
+                }
+            }
+
+
+            //Flag to detect if picture is last picture
+            if (lastDir)
+            {
+                filepath = filepath + "\\" + lazyHolder;
+            }
+
+
+            //Load photo to picture box
+            cavityNumber.ImageLocation = filepath;
+
+            database.CloseConnection();
+
+        }
+
+        //Automatically load data when machine combo box is activated
+        private void machineComboBox_DropDown(object sender, System.EventArgs e)
+        {
+
+            //Clear and connect to DB
+            this.machineComboBox.Items.Clear();
+            DBConnect database = new DBConnect();
+
+            //Read all relevant data into the combobox
+            MySqlDataReader dataReader = database.Select("Select distinct moulderid from unpivoted_parts_table order by moulderid asc");
+            while(dataReader.Read())
+            {
+                this.machineComboBox.Items.Add(dataReader.GetString("moulderid"));
+
+            }
+
+            dataReader.Close();
+            database.CloseConnection();
+            
+        }
+
+
+        //Select a tray and automatically load data
+        private void trayComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //Load tray data into reader
+            DBConnect database = new DBConnect();
+            MySqlDataReader dataReader = database.Select("select cubbyholenumber, partid, sum(PassFail) from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" group by cubbyholenumber;");
+
+            //Count cavities
+            int cavities = 0;
+
+            //Clear defect list
+            defectList.Items.Clear();
+
+            //Reset all buttons to gray
+            for (int i = 1; i < 65; i++)
+            {
+                Button tempButton = Controls.Find("cubby" + i, true).FirstOrDefault() as Button;
+                tempButton.BackColor = Color.White;
+            }
+
+            //Check all cubby holes for defects, change colour if defect detected
+            //
+            //TODO: Change tone of defect buttons depending on number of defects
+            while (dataReader.Read())
+            {
+                cavities++;
+                partLabel.Text = dataReader.GetString("partid");
+                if (dataReader.GetInt32("sum(PassFail)") == 0)
+                    {
+                    Button tempButton = Controls.Find("cubby" + dataReader.GetInt32("cubbyholenumber"), true).FirstOrDefault() as Button;
+                    tempButton.BackColor = Color.LightGreen;
+
+                }
+                else
+                {
+                    Button tempButton = Controls.Find("cubby" + dataReader.GetInt32("cubbyholenumber"), true).FirstOrDefault() as Button;
+                    tempButton.BackColor = Color.Red;
+                }
+            }
+            cavityLabel.Text = cavities + " cavities";
+
+            trayNumber.Text = "Tray Number: " + this.trayComboBox.SelectedItem.ToString().Substring(0, this.trayComboBox.SelectedItem.ToString().IndexOf(":"));
+
+            cavityNumber.ImageLocation = "";
+
+            dataReader.Close();
+
+            database.CloseConnection();
+        }
+
+
+        //When machine is selected
+        private void machineComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            DBConnect database = new DBConnect();
+
+            this.trayComboBox.Items.Clear();
+
+            //Populate tray combo box
+            MySqlDataReader dataReader = database.Select("select distinct trayuniqueid from unpivoted_parts_table where moulderid = \"" + this.machineComboBox.SelectedItem.ToString() + "\" order by timestamp desc; ");
+            while (dataReader.Read())
+            {
+                this.trayComboBox.Items.Add(dataReader.GetString("trayuniqueid"));
+
+            }
+
+            //Select first item in the tray combo box. Automatically loads tray data
+            this.trayComboBox.SelectedIndex = 0;
+
+            dataReader.Close();
+            database.CloseConnection();
+
+        }
+
+        private void cavityLabel_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
+
+
+//Database connection class
+
+public class DBConnect
+{
+    private MySqlConnection connection;
+    private string server;
+    private string database;
+    private string uid;
+    private string password;
+    private string connectionString;
+
+    public DBConnect()
+    {
+        Initialize();
+    }
+
+    ~DBConnect()
+    {
+        CloseConnection();
+    }
+
+    private void Initialize()
+    {
+        //Database connection information
+        server = "192.168.192.49";
+        database = "qcvision";
+        uid = "QCStaff";
+        password = "Precision";
+
+        connectionString = "SERVER=" + server + ";" + "DATABASE=" +
+        database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";" + "SSLmode=none;";
+
+        connection = new MySqlConnection(connectionString);
+
+        OpenConnection();
+
+    }
+    //open connection to database
+    private bool OpenConnection()
+    {
+        {
+            try
+            {
+                connection.Open();
+                return true;
+            }
+            catch (MySqlException ex)
+            {
+                //When handling errors, you can your application's response based 
+                //on the error number.
+                //The two most common error numbers when connecting are as follows:
+                //0: Cannot connect to server.
+                //1045: Invalid user name and/or password.
+                switch (ex.Number)
+                {
+                    case 0:
+                        MessageBox.Show("Cannot connect to server.  Contact administrator");
+                        break;
+
+                    case 1045:
+                        MessageBox.Show("Invalid username/password, please try again");
+                        break;
+                }
+                return false;
+            }
+        }
+    }
+
+    //Close connection
+    public bool CloseConnection()
+    {
+        try
+        {
+            connection.Close();
+            return true;
+        }
+        catch (MySqlException ex)
+        {
+            MessageBox.Show(ex.Message);
+            return false;
+        }
+    }
+
+
+    //Select statement
+    public MySqlDataReader Select(string query)
+    {
+        MySqlDataReader dataReader = null;
+        //Open connection
+
+
+        //Create Command
+        MySqlCommand cmd = new MySqlCommand(query, connection);
+        //Create a data reader and Execute the command
+        dataReader = cmd.ExecuteReader();
+
+
+        return dataReader;
+
+    }
+
+
+}
+
