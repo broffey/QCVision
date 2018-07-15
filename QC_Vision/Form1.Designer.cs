@@ -104,6 +104,8 @@
             this.cavityLabel = new System.Windows.Forms.Button();
             this.defectList = new System.Windows.Forms.ListBox();
             this.trayNumber = new System.Windows.Forms.Button();
+            this.printDefects = new System.Windows.Forms.Button();
+            this.printAll = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.cavityNumber)).BeginInit();
             this.SuspendLayout();
             // 
@@ -932,12 +934,32 @@
             this.trayNumber.Text = "Tray Number";
             this.trayNumber.UseVisualStyleBackColor = false;
             // 
+            // printDefects
+            // 
+            this.printDefects.Location = new System.Drawing.Point(98, 609);
+            this.printDefects.Name = "printDefects";
+            this.printDefects.Size = new System.Drawing.Size(184, 89);
+            this.printDefects.TabIndex = 83;
+            this.printDefects.Text = "Print Defects";
+            this.printDefects.UseVisualStyleBackColor = true;
+            // 
+            // printAll
+            // 
+            this.printAll.Location = new System.Drawing.Point(324, 609);
+            this.printAll.Name = "printAll";
+            this.printAll.Size = new System.Drawing.Size(184, 89);
+            this.printAll.TabIndex = 84;
+            this.printAll.Text = "Print All Parts";
+            this.printAll.UseVisualStyleBackColor = true;
+            // 
             // OperatorScreen
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDark;
             this.ClientSize = new System.Drawing.Size(1066, 822);
+            this.Controls.Add(this.printAll);
+            this.Controls.Add(this.printDefects);
             this.Controls.Add(this.trayNumber);
             this.Controls.Add(this.defectList);
             this.Controls.Add(this.cavityLabel);
@@ -1099,6 +1121,8 @@
         private System.Windows.Forms.Button cavityLabel;
         private System.Windows.Forms.ListBox defectList;
         private System.Windows.Forms.Button trayNumber;
+        private System.Windows.Forms.Button printDefects;
+        private System.Windows.Forms.Button printAll;
     }
 }
 

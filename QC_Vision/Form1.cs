@@ -35,6 +35,8 @@ namespace QC_Vision
             string lazyHolder = "";
             string tempHolder = "";
             bool lastDir = true;
+            double offset = 0;
+            double adj_factor = 0;
 
             cavityNumber.ImageLocation = "";
 
@@ -57,7 +59,25 @@ namespace QC_Vision
             //Load defect list
             while (dataReader.Read())
             {
-                defectList.Items.Add(dataReader.GetString("Measurement") + " : " + Math.Round(dataReader.GetDouble("Result") * dataReader.GetDouble("Adjustment_factor") + dataReader.GetDouble("offset"), 3));
+                if(dataReader.IsDBNull(15))
+                {
+                    offset = 0;
+                }
+                else
+                {
+                    offset = dataReader.GetDouble("offset");
+                }
+
+                if (dataReader.IsDBNull(13))
+                {
+                    adj_factor = 1;
+                }
+                else
+                {
+                    adj_factor = dataReader.GetDouble("Adjustment_factor");
+                }
+
+                defectList.Items.Add(dataReader.GetString("Measurement") + " : " + Math.Round(dataReader.GetDouble("Result") * adj_factor + offset, 3));
             }
 
             dataReader.Close();
