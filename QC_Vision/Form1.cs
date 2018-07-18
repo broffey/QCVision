@@ -40,6 +40,10 @@ namespace QC_Vision
 
             cavityNumber.ImageLocation = "";
 
+            this.Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
+
+
             //Get sender data
             Button tempButton = (Button)sender;
 
@@ -47,6 +51,7 @@ namespace QC_Vision
             //Check if a cavity in the tray was selected
             if (tempButton.BackColor == Color.White)
             {
+                this.Cursor = Cursors.Default;
                 return;
             }
 
@@ -84,17 +89,17 @@ namespace QC_Vision
 
 
 
-            //Load timestamp. This cannot be done as the previous reader, as a null is returned on empty defects
+            //Load timestamp. this cannot be done as the previous reader, as a null is returned on empty defects
             dataReader = database.Select("Select * from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and cubbyholenumber = \"" + tempButton.Text + "\" limit 1");
             dataReader.Read();
 
             timestamp = dataReader.GetString("timestamp");
 
-            /*This section of code is for the image search. The images are broken up into subfolders, with approx 100 images per sub folder. Each image is timestamped at the time taken, and each subfolder is timestamped with time created
+            /*this section of code is for the image search. The images are broken up into subfolders, with approx 100 images per sub folder. Each image is timestamped at the time taken, and each subfolder is timestamped with time created
              * The code iterates through the subfolders to find the folder immediately following the timestamp. After this is found, it indicates the timestamp is in the folder immediately before this one. It then iterates through the pictures
              * in a similar manner.
              * 
-             * NB: This is a terribly designed timestamping/filing system, but it's what the machine was configured with. Consider refactoring ASAP.
+             * NB: this is a terribly designed timestamping/filing system, but it's what the machine was configured with. Consider refactoring ASAP.
              * 
              */
 
@@ -152,7 +157,7 @@ namespace QC_Vision
                 }
                 else
                 {
-                    //This section checks if the timestamp detected is within 5 seconds of the timestamp of the part. Due to the way the timestamps are assigned to the part vs the picture, there can
+                    //this section checks if the timestamp detected is within 5 seconds of the timestamp of the part. Due to the way the timestamps are assigned to the part vs the picture, there can
                     //be a desynced, with the timestamp slightly before or after the part. If the parts are displaying the picture of the part, consider lowering the threshold from 5.
 
                     if (Math.Abs(Int32.Parse(tempHolder.Substring(17, 2)) - Int32.Parse(timestamp.Substring(17, 2))) < 5)
@@ -181,11 +186,15 @@ namespace QC_Vision
 
             database.CloseConnection();
 
+            this.Cursor = Cursors.Default;
+
         }
 
         //Automatically load data when machine combo box is activated
         private void machineComboBox_DropDown(object sender, System.EventArgs e)
         {
+            this.Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
 
             //Clear and connect to DB
             this.machineComboBox.Items.Clear();
@@ -201,13 +210,17 @@ namespace QC_Vision
 
             dataReader.Close();
             database.CloseConnection();
-            
+            this.Cursor = Cursors.Default;
+
         }
 
 
         //Select a tray and automatically load data
         private void trayComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            this.Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
+
             //Load tray data into reader
             DBConnect database = new DBConnect();
             MySqlDataReader dataReader = database.Select("select cubbyholenumber, partid, sum(PassFail) from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" group by cubbyholenumber;");
@@ -253,12 +266,16 @@ namespace QC_Vision
             dataReader.Close();
 
             database.CloseConnection();
+            this.Cursor = Cursors.Default;
         }
 
 
         //When machine is selected
         private void machineComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+
+            this.Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
             DBConnect database = new DBConnect();
 
             this.trayComboBox.Items.Clear();
@@ -276,6 +293,7 @@ namespace QC_Vision
 
             dataReader.Close();
             database.CloseConnection();
+            this.Cursor = Cursors.Default;
 
         }
 
@@ -331,6 +349,7 @@ public class DBConnect
             try
             {
                 connection.Open();
+
                 return true;
             }
             catch (MySqlException ex)
@@ -361,6 +380,8 @@ public class DBConnect
         try
         {
             connection.Close();
+
+
             return true;
         }
         catch (MySqlException ex)
