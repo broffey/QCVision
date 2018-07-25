@@ -942,6 +942,7 @@
             this.printDefects.TabIndex = 83;
             this.printDefects.Text = "Print Defects";
             this.printDefects.UseVisualStyleBackColor = true;
+            this.printDefects.Click += new System.EventHandler(this.printDefects_Click);
             // 
             // printAll
             // 

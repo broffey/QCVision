@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 using System.IO;
+using System.Drawing.Printing;
 
 
 
@@ -275,6 +276,12 @@ namespace QC_Vision
         {
 
             this.Cursor = Cursors.WaitCursor;
+
+            foreach(Control c in this.Controls)
+            {
+                c.Enabled = false;
+            }
+
             Application.DoEvents();
             DBConnect database = new DBConnect();
 
@@ -293,12 +300,32 @@ namespace QC_Vision
 
             dataReader.Close();
             database.CloseConnection();
+            foreach (Control c in this.Controls)
+            {
+                c.Enabled = true;
+            }
+
             this.Cursor = Cursors.Default;
 
         }
 
         private void cavityLabel_Click(object sender, EventArgs e)
         {
+
+        }
+
+        private void printDefects_Click(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
+            DBConnect database = new DBConnect();
+
+            MySqlDataReader dataReader = database.Select("select cubbyholenumber, partid, Measurement, adjustment_factor, offset from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and passfail = 1 order by cubbyholenumber;");
+
+            dataReader.Close();
+            database.CloseConnection();
+
+            this.Cursor = Cursors.Default;
 
         }
     }
