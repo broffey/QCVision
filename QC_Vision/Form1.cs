@@ -19,6 +19,8 @@ namespace QC_Vision
     
     public partial class OperatorScreen : Form
     {
+
+
         public OperatorScreen()
         {
 
@@ -31,11 +33,6 @@ namespace QC_Vision
         {
             //Clear defect list
             defectList.Items.Clear();
-            string timestamp = "";
-            string filepath = "";
-            string lazyHolder = "";
-            string tempHolder = "";
-            bool lastDir = true;
             double offset = 0;
             double adj_factor = 0;
 
@@ -94,96 +91,11 @@ namespace QC_Vision
             dataReader = database.Select("Select * from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and cubbyholenumber = \"" + tempButton.Text + "\" limit 1");
             dataReader.Read();
 
-            timestamp = dataReader.GetString("timestamp");
-
-            /*this section of code is for the image search. The images are broken up into subfolders, with approx 100 images per sub folder. Each image is timestamped at the time taken, and each subfolder is timestamped with time created
-             * The code iterates through the subfolders to find the folder immediately following the timestamp. After this is found, it indicates the timestamp is in the folder immediately before this one. It then iterates through the pictures
-             * in a similar manner.
-             * 
-             * NB: this is a terribly designed timestamping/filing system, but it's what the machine was configured with. Consider refactoring ASAP.
-             * 
-             */
-
-            //Find whether part is a stem or housing
-            if (partLabel.Text.Substring(0, 2) == "04")
-            {
-                filepath = "Q:\\StemCavityNumber";
-            }
-            else
-            {
-                filepath = "Q:\\HousingFrontCavityNumber";
-            }
-
-
-            //Unify timestamp format
-            timestamp.Replace(" ", "_");
-
-
-            //Iterate through folders
-            foreach (string d in Directory.GetDirectories(filepath))
-            {
-
-                tempHolder = d.Substring(d.LastIndexOf("\\") + 1);
-                if (tempHolder.CompareTo(timestamp) < 0)
-                {
-                    lazyHolder = tempHolder;
-
-                }
-                else
-                {
-                    filepath = filepath + "\\" + lazyHolder;
-                    lastDir = false;
-                    break;
-                }
-            }
-
-
-            //Flag to detect if picture is in latest folder
-            if(lastDir)
-            {
-                filepath = filepath + "\\" + lazyHolder;
-            }
-
-            lastDir = true;
-
-
-            //Iterate through files
-            foreach (string d in Directory.GetFiles(filepath))
-            {
-
-                tempHolder = d.Substring(d.LastIndexOf("\\") + 1);
-                if (tempHolder.CompareTo(timestamp) < 0)
-                {
-                    lazyHolder = tempHolder;
-                }
-                else
-                {
-                    //this section checks if the timestamp detected is within 5 seconds of the timestamp of the part. Due to the way the timestamps are assigned to the part vs the picture, there can
-                    //be a desynced, with the timestamp slightly before or after the part. If the parts are displaying the picture of the part, consider lowering the threshold from 5.
-
-                    if (Math.Abs(Int32.Parse(tempHolder.Substring(17, 2)) - Int32.Parse(timestamp.Substring(17, 2))) < 5)
-                        {
-                        filepath = filepath + "\\" + tempHolder;
-                    }
-                    else
-                    {
-                        filepath = filepath + "\\" + lazyHolder;
-                    }
-                    lastDir = false;
-                    break;
-                }
-            }
-
-
-            //Flag to detect if picture is last picture
-            if (lastDir)
-            {
-                filepath = filepath + "\\" + lazyHolder;
-            }
+            ;
 
 
             //Load photo to picture box
-            cavityNumber.ImageLocation = filepath;
+            cavityNumber.ImageLocation = getImageLocation(dataReader.GetString("timestamp"));
 
             database.CloseConnection();
 
@@ -318,14 +230,214 @@ namespace QC_Vision
         {
             this.Cursor = Cursors.WaitCursor;
             Application.DoEvents();
-            DBConnect database = new DBConnect();
 
-            MySqlDataReader dataReader = database.Select("select cubbyholenumber, partid, Measurement, adjustment_factor, offset from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and passfail = 1 order by cubbyholenumber;");
+            if(trayComboBox.Text == "")
+            {
+                
+                MessageBox.Show("Select a tray before printing");
+                this.Cursor = Cursors.Default;
+                return;
+                
+            }
 
-            dataReader.Close();
-            database.CloseConnection();
+
+
+
+            try
+            {
+                PrintDocument pd = new PrintDocument();
+
+                //Configure the default setttings of the document
+                Margins margins = new Margins(1, 37, 1, 37);
+                pd.DefaultPageSettings.Margins = margins;
+                pd.PrinterSettings.PrinterName = "\\\\callisto\\QCMFD";
+                pd.DefaultPageSettings.Color = true;
+                pd.DefaultPageSettings.Landscape = true;
+
+
+                //Add data to page
+                pd.PrintPage += new PrintPageEventHandler(this.pd_PrintPage);
+
+
+                //Print page
+                pd.Print();
+            }
+
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+
+
 
             this.Cursor = Cursors.Default;
+
+        }
+
+        private string getImageLocation(string timestamp)
+        {
+            string filepath = "";
+            string lazyHolder = "";
+            string tempHolder = "";
+            bool lastDir = true;
+            /*this section of code is for the image search. The images are broken up into subfolders, with approx 100 images per sub folder. Each image is timestamped at the time taken, and each subfolder is timestamped with time created
+             * The code iterates through the subfolders to find the folder immediately following the timestamp. After this is found, it indicates the timestamp is in the folder immediately before this one. It then iterates through the pictures
+             * in a similar manner.
+             * 
+             * NB: this is a terribly designed timestamping/filing system, but it's what the machine was configured with. Consider refactoring ASAP.
+             * 
+             */
+
+            //Find whether part is a stem or housing
+            if (partLabel.Text.Substring(0, 2) == "04")
+            {
+                filepath = "Q:\\StemCavityNumber";
+            }
+            else
+            {
+                filepath = "Q:\\HousingFrontCavityNumber";
+            }
+
+
+            //Unify timestamp format
+            timestamp.Replace(" ", "_");
+
+
+            //Iterate through folders
+            foreach (string d in Directory.GetDirectories(filepath))
+            {
+
+                tempHolder = d.Substring(d.LastIndexOf("\\") + 1);
+                if (tempHolder.CompareTo(timestamp) < 0)
+                {
+                    lazyHolder = tempHolder;
+
+                }
+                else
+                {
+                    filepath = filepath + "\\" + lazyHolder;
+                    lastDir = false;
+                    break;
+                }
+            }
+
+
+            //Flag to detect if picture is in latest folder
+            if (lastDir)
+            {
+                filepath = filepath + "\\" + lazyHolder;
+            }
+
+            lastDir = true;
+
+
+            //Iterate through files
+            foreach (string d in Directory.GetFiles(filepath))
+            {
+
+                tempHolder = d.Substring(d.LastIndexOf("\\") + 1);
+                if (tempHolder.CompareTo(timestamp) < 0)
+                {
+                    lazyHolder = tempHolder;
+                }
+                else
+                {
+                    //this section checks if the timestamp detected is within 5 seconds of the timestamp of the part. Due to the way the timestamps are assigned to the part vs the picture, there can
+                    //be a desynced, with the timestamp slightly before or after the part. If the parts are displaying the picture of the part, consider lowering the threshold from 5.
+
+                    if (Math.Abs(Int32.Parse(tempHolder.Substring(17, 2)) - Int32.Parse(timestamp.Substring(17, 2))) < 5)
+                    {
+                        filepath = filepath + "\\" + tempHolder;
+                    }
+                    else
+                    {
+                        filepath = filepath + "\\" + lazyHolder;
+                    }
+                    lastDir = false;
+                    break;
+                }
+            }
+
+
+            //Flag to detect if picture is last picture
+            if (lastDir)
+            {
+                filepath = filepath + "\\" + lazyHolder;
+            }
+
+            return filepath;
+        }
+
+        private void pd_PrintPage(object sender, PrintPageEventArgs ev)
+        {
+
+            foreach (Control c in this.Controls)
+            {
+                c.Enabled = false;
+            }
+
+            Font printFont = new Font("Arial", 10);
+
+            //Sets border colour and width
+            Pen blackPen = new Pen(Color.Black, 1);
+
+
+            ev.Graphics.DrawRectangle(blackPen, ev.MarginBounds);
+
+
+            //Draw horizontal lines
+            for(int i = 1; i < 7; i++)
+            {
+
+                Point p1 = new Point(1, ev.MarginBounds.Height / 7 * i);
+                Point p2 = new Point(ev.MarginBounds.Width, ev.MarginBounds.Height / 7 * i);
+                ev.Graphics.DrawLine(blackPen, p1, p2);
+            }
+
+            //Draw vertical lines
+            for (int i = 1; i < 3; i++)
+            {
+
+                Point p1 = new Point(ev.MarginBounds.Width / 3 * i, 1);
+                Point p2 = new Point(ev.MarginBounds.Width / 3 * i, ev.MarginBounds.Height);
+                ev.Graphics.DrawLine(blackPen, p1, p2);
+            }
+
+            //Add tray guide to bottom right corner
+            Image image = Image.FromFile("Q:\\StemCavityNumber\\tray diagram.png");
+            PointF ulCorner = new PointF(ev.MarginBounds.Width / 3 * 2, ev.MarginBounds.Height / 7 * 4);
+            PointF urCorner = new PointF(ev.MarginBounds.Width, ev.MarginBounds.Height / 7 * 4);
+            PointF llCorner = new PointF(ev.MarginBounds.Width / 3 * 2, ev.MarginBounds.Height);
+
+            PointF[]  destPara =  { ulCorner, urCorner, llCorner};
+
+            ev.Graphics.DrawImage(image, destPara);
+
+            ev.Graphics.DrawString("Part Number: " + partLabel.Text, new Font("Arial", 14), Brushes.Black, new PointF(10, 10));
+            ev.Graphics.DrawString("Machine Number: " + machineComboBox.Text, new Font("Arial", 14), Brushes.Black, new PointF(10, 10 + new Font("Arial", 14).GetHeight(ev.Graphics)));
+
+            ev.Graphics.DrawString("Total Cavities: " + cavityLabel.Text, new Font("Arial", 14), Brushes.Black, new PointF(ev.MarginBounds.Width / 3 * 1 + 10, 10));
+            ev.Graphics.DrawString("Tray Number: " + trayNumber.Text, new Font("Arial", 14), Brushes.Black, new PointF(ev.MarginBounds.Width / 3 * 1 + 10, 10 + new Font("Arial", 14).GetHeight(ev.Graphics)));
+
+            ev.Graphics.DrawString("Tray ID: " + trayComboBox.Text, new Font("Arial", 14), Brushes.Black, new PointF(ev.MarginBounds.Width / 3 * 2 + 10, 10));
+            ev.Graphics.DrawString("Time Printed: " + DateTime.Now.ToString("hh:mm:ss tt dd/mm/yyyy"), new Font("Arial", 14), Brushes.Black, new PointF(ev.MarginBounds.Width / 3 * 2 + 10, 10 + new Font("Arial", 14).GetHeight(ev.Graphics)));
+
+
+            DBConnect database = new DBConnect();
+            MySqlDataReader dataReader = database.Select("select * from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and passfail = 1 order by cubbyholenumber desc;");
+
+
+
+
+            dataReader.Close();
+
+            database.CloseConnection();
+
+            foreach (Control c in this.Controls)
+            {
+                c.Enabled = true;
+            }
 
         }
     }
