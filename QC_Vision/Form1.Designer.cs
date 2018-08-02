@@ -105,7 +105,6 @@
             this.defectList = new System.Windows.Forms.ListBox();
             this.trayNumber = new System.Windows.Forms.Button();
             this.printDefects = new System.Windows.Forms.Button();
-            this.printAll = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.cavityNumber)).BeginInit();
             this.SuspendLayout();
             // 
@@ -936,22 +935,13 @@
             // 
             // printDefects
             // 
-            this.printDefects.Location = new System.Drawing.Point(98, 609);
+            this.printDefects.Location = new System.Drawing.Point(202, 605);
             this.printDefects.Name = "printDefects";
-            this.printDefects.Size = new System.Drawing.Size(184, 89);
+            this.printDefects.Size = new System.Drawing.Size(202, 89);
             this.printDefects.TabIndex = 83;
             this.printDefects.Text = "Print Defects";
             this.printDefects.UseVisualStyleBackColor = true;
             this.printDefects.Click += new System.EventHandler(this.printDefects_Click);
-            // 
-            // printAll
-            // 
-            this.printAll.Location = new System.Drawing.Point(324, 609);
-            this.printAll.Name = "printAll";
-            this.printAll.Size = new System.Drawing.Size(184, 89);
-            this.printAll.TabIndex = 84;
-            this.printAll.Text = "Print All Parts";
-            this.printAll.UseVisualStyleBackColor = true;
             // 
             // OperatorScreen
             // 
@@ -959,7 +949,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDark;
             this.ClientSize = new System.Drawing.Size(1061, 822);
-            this.Controls.Add(this.printAll);
             this.Controls.Add(this.printDefects);
             this.Controls.Add(this.trayNumber);
             this.Controls.Add(this.defectList);
@@ -1123,7 +1112,6 @@
         private System.Windows.Forms.ListBox defectList;
         private System.Windows.Forms.Button trayNumber;
         private System.Windows.Forms.Button printDefects;
-        private System.Windows.Forms.Button printAll;
     }
 }
 

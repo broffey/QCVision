@@ -20,6 +20,8 @@ namespace QC_Vision
     public partial class OperatorScreen : Form
     {
 
+        private int printedPages = 0;
+
 
         public OperatorScreen()
         {
@@ -231,7 +233,8 @@ namespace QC_Vision
             this.Cursor = Cursors.WaitCursor;
             Application.DoEvents();
 
-            if(trayComboBox.Text == "")
+
+            if (trayComboBox.Text == "")
             {
                 
                 MessageBox.Show("Select a tray before printing");
@@ -240,17 +243,23 @@ namespace QC_Vision
                 
             }
 
+            foreach (Control c in this.Controls)
+            {
+                c.Enabled = false;
+            }
 
 
 
             try
             {
+
+                printedPages = 0;
                 PrintDocument pd = new PrintDocument();
 
                 //Configure the default setttings of the document
                 Margins margins = new Margins(1, 37, 1, 37);
                 pd.DefaultPageSettings.Margins = margins;
-                pd.PrinterSettings.PrinterName = "\\\\callisto\\QCMFD";
+                pd.PrinterSettings.PrinterName = "\\\\saturn\\lp-QCvision";
                 pd.DefaultPageSettings.Color = true;
                 pd.DefaultPageSettings.Landscape = true;
 
@@ -269,7 +278,10 @@ namespace QC_Vision
             }
 
 
-
+            foreach (Control c in this.Controls)
+            {
+                c.Enabled = true;
+            }
 
             this.Cursor = Cursors.Default;
 
@@ -372,15 +384,18 @@ namespace QC_Vision
         private void pd_PrintPage(object sender, PrintPageEventArgs ev)
         {
 
-            foreach (Control c in this.Controls)
-            {
-                c.Enabled = false;
-            }
 
-            Font printFont = new Font("Arial", 10);
 
-            //Sets border colour and width
+
+
+            
             Pen blackPen = new Pen(Color.Black, 1);
+            Font printFont = new Font("Arial", 8);
+            int currentCubby = 0;
+            int printedCubbys = 0;
+            int currentDefects = 0;
+            double offset = 0;
+            double adj_factor = 0;
 
 
             ev.Graphics.DrawRectangle(blackPen, ev.MarginBounds);
@@ -414,6 +429,8 @@ namespace QC_Vision
 
             ev.Graphics.DrawImage(image, destPara);
 
+
+            //Populate header
             ev.Graphics.DrawString("Part Number: " + partLabel.Text, new Font("Arial", 14), Brushes.Black, new PointF(10, 10));
             ev.Graphics.DrawString("Machine Number: " + machineComboBox.Text, new Font("Arial", 14), Brushes.Black, new PointF(10, 10 + new Font("Arial", 14).GetHeight(ev.Graphics)));
 
@@ -425,19 +442,109 @@ namespace QC_Vision
 
 
             DBConnect database = new DBConnect();
-            MySqlDataReader dataReader = database.Select("select * from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and passfail = 1 order by cubbyholenumber desc;");
+            MySqlDataReader dataReader = database.Select("select * from unpivoted_parts_table where trayuniqueid = \"" + this.trayComboBox.SelectedItem.ToString() + "\" and passfail = 1 order by cubbyholenumber asc;");
+
+            dataReader.Read();
+
+            //Read data 15 times per previous printed page
+            for (int i = 0; i < printedPages * 15+1;)
+            {
+                
+
+                if (dataReader.GetInt32("cubbyholenumber") == currentCubby) {
+                    dataReader.Read();
+                }
+                else
+                {
+
+                    currentCubby = dataReader.GetInt32("cubbyholenumber");
+                    i++;
+                }
+            }
+            //Reset cubby number
+            currentCubby = 0;
 
 
+            //Performing a do/while loop instead of while loop as there is no way to reverse data reader
+            do
+            {
+
+                //Actions to take if a new cubby is detected
+                if (dataReader.GetInt32("cubbyholenumber") != currentCubby)
+                {
+                    printedCubbys++;
+
+                    //If the maximum number of cubbys per pages has been reached
+                    if (printedCubbys > 15)
+                    {
+                        ev.HasMorePages = true;
+                        break;
+                    }
+                    currentDefects = 0;
+                    currentCubby = dataReader.GetInt32("cubbyholenumber");
+                    ulCorner.X = ev.MarginBounds.Width / 3 * (int)(printedCubbys / 6.1);
+                    ulCorner.Y = ev.MarginBounds.Height / 7 * ((printedCubbys % 6 == 0) ? 6 : printedCubbys % 6);
+                    urCorner.X = ev.MarginBounds.Width / 3 * (int)(printedCubbys / 6.1) + ev.MarginBounds.Width / 9;
+                    urCorner.Y = ulCorner.Y;
+                    llCorner.X = ulCorner.X;
+                    llCorner.Y = ev.MarginBounds.Height / 7 * (1 + ((printedCubbys % 6 == 0) ? 6 : printedCubbys % 6));
+                    image = Image.FromFile(getImageLocation(dataReader.GetString("timestamp")));
+                    PointF[] imageLoc = { ulCorner, urCorner, llCorner };
+                    ev.Graphics.DrawImage(image, imageLoc);
+                    urCorner.X += 3;
+                    ev.Graphics.DrawString("Cubbyhole: " + currentCubby, printFont, Brushes.Black, urCorner);
+                }
+
+
+                //If runs out of room to print defects
+                if (currentDefects++ > 6)
+                {
+                    urCorner.Y += printFont.GetHeight(ev.Graphics);
+                    ev.Graphics.DrawString("More defects not listed" + currentCubby, printFont, Brushes.Black, urCorner);
+                }
+
+                //Print the defect
+                else
+                {
+                    //Load the correct values for offsets and adjustment factors
+                    if (dataReader.IsDBNull(15))
+                    {
+                        offset = 0;
+                    }
+                    else
+                    {
+                        offset = dataReader.GetDouble("offset");
+                    }
+
+                    if (dataReader.IsDBNull(13))
+                    {
+                        adj_factor = 1;
+                    }
+                    else
+                    {
+                        adj_factor = dataReader.GetDouble("Adjustment_factor");
+                    }
+
+
+                    //Print the defect
+                    urCorner.Y += printFont.GetHeight(ev.Graphics);
+
+                    ev.Graphics.DrawString(dataReader.GetString("Measurement") + " : " + Math.Round(dataReader.GetDouble("Result") * adj_factor + offset, 3), printFont, Brushes.Black, urCorner);
+                }
+
+            } while (dataReader.Read());
+
+
+            printedPages++;
+
+            
 
 
             dataReader.Close();
 
             database.CloseConnection();
 
-            foreach (Control c in this.Controls)
-            {
-                c.Enabled = true;
-            }
+
 
         }
     }
