@@ -105,7 +105,19 @@
             this.defectList = new System.Windows.Forms.ListBox();
             this.trayNumber = new System.Windows.Forms.Button();
             this.printDefects = new System.Windows.Forms.Button();
+            this.topLeftPic = new System.Windows.Forms.PictureBox();
+            this.topRightPic = new System.Windows.Forms.PictureBox();
+            this.botLeftPic = new System.Windows.Forms.PictureBox();
+            this.botRightPic = new System.Windows.Forms.PictureBox();
+            this.diaLabel1 = new System.Windows.Forms.Label();
+            this.diaLabel2 = new System.Windows.Forms.Label();
+            this.diaLabel3 = new System.Windows.Forms.Label();
+            this.diaLabel4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.cavityNumber)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.topLeftPic)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.topRightPic)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.botLeftPic)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.botRightPic)).BeginInit();
             this.SuspendLayout();
             // 
             // cubby1
@@ -943,12 +955,92 @@
             this.printDefects.UseVisualStyleBackColor = true;
             this.printDefects.Click += new System.EventHandler(this.printDefects_Click);
             // 
+            // topLeftPic
+            // 
+            this.topLeftPic.Location = new System.Drawing.Point(1078, 23);
+            this.topLeftPic.Name = "topLeftPic";
+            this.topLeftPic.Size = new System.Drawing.Size(250, 250);
+            this.topLeftPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.topLeftPic.TabIndex = 84;
+            this.topLeftPic.TabStop = false;
+            // 
+            // topRightPic
+            // 
+            this.topRightPic.Location = new System.Drawing.Point(1393, 23);
+            this.topRightPic.Name = "topRightPic";
+            this.topRightPic.Size = new System.Drawing.Size(250, 250);
+            this.topRightPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.topRightPic.TabIndex = 85;
+            this.topRightPic.TabStop = false;
+            // 
+            // botLeftPic
+            // 
+            this.botLeftPic.Location = new System.Drawing.Point(1078, 329);
+            this.botLeftPic.Name = "botLeftPic";
+            this.botLeftPic.Size = new System.Drawing.Size(250, 250);
+            this.botLeftPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.botLeftPic.TabIndex = 86;
+            this.botLeftPic.TabStop = false;
+            // 
+            // botRightPic
+            // 
+            this.botRightPic.Location = new System.Drawing.Point(1393, 329);
+            this.botRightPic.Name = "botRightPic";
+            this.botRightPic.Size = new System.Drawing.Size(250, 250);
+            this.botRightPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.botRightPic.TabIndex = 87;
+            this.botRightPic.TabStop = false;
+            // 
+            // diaLabel1
+            // 
+            this.diaLabel1.AutoSize = true;
+            this.diaLabel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.diaLabel1.Location = new System.Drawing.Point(1075, 605);
+            this.diaLabel1.Name = "diaLabel1";
+            this.diaLabel1.Size = new System.Drawing.Size(0, 13);
+            this.diaLabel1.TabIndex = 88;
+            // 
+            // diaLabel2
+            // 
+            this.diaLabel2.AutoSize = true;
+            this.diaLabel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.diaLabel2.Location = new System.Drawing.Point(1075, 628);
+            this.diaLabel2.Name = "diaLabel2";
+            this.diaLabel2.Size = new System.Drawing.Size(0, 13);
+            this.diaLabel2.TabIndex = 89;
+            // 
+            // diaLabel3
+            // 
+            this.diaLabel3.AutoSize = true;
+            this.diaLabel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.diaLabel3.Location = new System.Drawing.Point(1075, 654);
+            this.diaLabel3.Name = "diaLabel3";
+            this.diaLabel3.Size = new System.Drawing.Size(0, 13);
+            this.diaLabel3.TabIndex = 90;
+            // 
+            // diaLabel4
+            // 
+            this.diaLabel4.AutoSize = true;
+            this.diaLabel4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(192)))));
+            this.diaLabel4.Location = new System.Drawing.Point(1075, 681);
+            this.diaLabel4.Name = "diaLabel4";
+            this.diaLabel4.Size = new System.Drawing.Size(0, 13);
+            this.diaLabel4.TabIndex = 91;
+            // 
             // OperatorScreen
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.ClientSize = new System.Drawing.Size(1061, 822);
+            this.ClientSize = new System.Drawing.Size(1708, 822);
+            this.Controls.Add(this.diaLabel4);
+            this.Controls.Add(this.diaLabel3);
+            this.Controls.Add(this.diaLabel2);
+            this.Controls.Add(this.diaLabel1);
+            this.Controls.Add(this.botRightPic);
+            this.Controls.Add(this.botLeftPic);
+            this.Controls.Add(this.topRightPic);
+            this.Controls.Add(this.topLeftPic);
             this.Controls.Add(this.printDefects);
             this.Controls.Add(this.trayNumber);
             this.Controls.Add(this.defectList);
@@ -1029,6 +1121,10 @@
             this.Name = "OperatorScreen";
             this.Text = "Operator Screen";
             ((System.ComponentModel.ISupportInitialize)(this.cavityNumber)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.topLeftPic)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.topRightPic)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.botLeftPic)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.botRightPic)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1112,6 +1208,14 @@
         private System.Windows.Forms.ListBox defectList;
         private System.Windows.Forms.Button trayNumber;
         private System.Windows.Forms.Button printDefects;
+        private System.Windows.Forms.PictureBox topLeftPic;
+        private System.Windows.Forms.PictureBox topRightPic;
+        private System.Windows.Forms.PictureBox botLeftPic;
+        private System.Windows.Forms.PictureBox botRightPic;
+        private System.Windows.Forms.Label diaLabel1;
+        private System.Windows.Forms.Label diaLabel2;
+        private System.Windows.Forms.Label diaLabel3;
+        private System.Windows.Forms.Label diaLabel4;
     }
 }
 

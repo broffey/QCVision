@@ -28,6 +28,17 @@ namespace QC_Vision
 
             InitializeComponent();
         }
+
+        private void clearImages()
+        {
+
+            //Clear all images
+            cavityNumber.ImageLocation = "";
+            topRightPic.ImageLocation = "";
+            topLeftPic.ImageLocation = "";
+            botRightPic.ImageLocation = "";
+            botLeftPic.ImageLocation = "";
+        }
         
 
         //Load the data from a cubbyhole button. All buttons are linked to this function, sender argument is used to determine which cubby is pressed
@@ -38,7 +49,7 @@ namespace QC_Vision
             double offset = 0;
             double adj_factor = 0;
 
-            cavityNumber.ImageLocation = "";
+            clearImages();
 
             this.Cursor = Cursors.WaitCursor;
             Application.DoEvents();
@@ -46,6 +57,8 @@ namespace QC_Vision
 
             //Get sender data
             Button tempButton = (Button)sender;
+
+            tempButton.FlatAppearance.BorderColor = System.Drawing.Color.Blue;
 
 
             //Check if a cavity in the tray was selected
@@ -96,8 +109,54 @@ namespace QC_Vision
             ;
 
 
-            //Load photo to picture box
-            cavityNumber.ImageLocation = getImageLocation(dataReader.GetString("timestamp"));
+
+            //Find whether part is a stem or housing, and load all the relevant pictures
+            if (partLabel.Text.Substring(0, 2) == "04")
+            {
+
+                //Load photos taken at the time. NB the file path naming and storage is terrible. Consider refactoring ASAP.
+
+                cavityNumber.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemCavityNumber");
+                topLeftPic.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemGasketSeatCheck");
+                topRightPic.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemOverall");
+                botLeftPic.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemGasketSeatFlash");
+                botRightPic.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemOrifice");
+
+
+                //Diagnostics to check that correct images are loaded. Comment out section before going live
+
+                /*
+                diaLabel1.Text = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemGasketSeatCheck");
+                diaLabel2.Text = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemOverall");
+                diaLabel3.Text = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemGasketSeatFlash");
+                diaLabel4.Text = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\StemOrifice");
+                */
+            }
+            else
+            {
+                cavityNumber.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingFrontCavityNumber");
+                topLeftPic.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingRibs");
+                topRightPic.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingOverall");
+                botLeftPic.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingCastlns");
+                botRightPic.ImageLocation = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingOrifice");
+
+                //Diagnostics to check that correct images are loaded. Comment out section before going live
+
+                /*
+                diaLabel1.Text = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingRibs");
+                diaLabel2.Text = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingOverall");
+                diaLabel3.Text = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingCastlns");
+                diaLabel4.Text = getImageLocation(dataReader.GetString("timestamp"), "Q:\\LoggedImages\\HousingOrifice");
+
+                */
+            }
+
+            
+
+
+
+
+
 
             database.CloseConnection();
 
@@ -176,7 +235,10 @@ namespace QC_Vision
 
             trayNumber.Text = "Tray Number: " + this.trayComboBox.SelectedItem.ToString().Substring(0, this.trayComboBox.SelectedItem.ToString().IndexOf(":"));
 
-            cavityNumber.ImageLocation = "";
+
+            //Blank out images
+            clearImages();
+
 
             dataReader.Close();
 
@@ -287,9 +349,9 @@ namespace QC_Vision
 
         }
 
-        private string getImageLocation(string timestamp)
+        private string getImageLocation(string timestamp, string filepath)
         {
-            string filepath = "";
+
             string lazyHolder = "";
             string tempHolder = "";
             bool lastDir = true;
@@ -301,15 +363,6 @@ namespace QC_Vision
              * 
              */
 
-            //Find whether part is a stem or housing
-            if (partLabel.Text.Substring(0, 2) == "04")
-            {
-                filepath = "Q:\\StemCavityNumber";
-            }
-            else
-            {
-                filepath = "Q:\\HousingFrontCavityNumber";
-            }
 
 
             //Unify timestamp format
@@ -348,6 +401,12 @@ namespace QC_Vision
             foreach (string d in Directory.GetFiles(filepath))
             {
 
+                //Skip thumbs file
+                if ((d.Substring(d.LastIndexOf("\\") + 1) == "Thumbs.db"))
+                {
+                    break;
+                }
+
                 tempHolder = d.Substring(d.LastIndexOf("\\") + 1);
                 if (tempHolder.CompareTo(timestamp) < 0)
                 {
@@ -356,7 +415,7 @@ namespace QC_Vision
                 else
                 {
                     //this section checks if the timestamp detected is within 5 seconds of the timestamp of the part. Due to the way the timestamps are assigned to the part vs the picture, there can
-                    //be a desynced, with the timestamp slightly before or after the part. If the parts are displaying the picture of the part, consider lowering the threshold from 5.
+                    //be a desynced, with the timestamp slightly before or after the part. If the parts are displaying the picture of the next part, consider lowering the threshold from 7.
 
                     if (Math.Abs(Int32.Parse(tempHolder.Substring(17, 2)) - Int32.Parse(timestamp.Substring(17, 2))) < 5)
                     {
@@ -396,6 +455,7 @@ namespace QC_Vision
             int currentDefects = 0;
             double offset = 0;
             double adj_factor = 0;
+            string filepath = "";
 
 
             ev.Graphics.DrawRectangle(blackPen, ev.MarginBounds);
@@ -420,7 +480,7 @@ namespace QC_Vision
             }
 
             //Add tray guide to bottom right corner
-            Image image = Image.FromFile("Q:\\StemCavityNumber\\tray diagram.png");
+            Image image = Image.FromFile("Q:\\LoggedImages\\tray diagram.png");
             PointF ulCorner = new PointF(ev.MarginBounds.Width / 3 * 2, ev.MarginBounds.Height / 7 * 4);
             PointF urCorner = new PointF(ev.MarginBounds.Width, ev.MarginBounds.Height / 7 * 4);
             PointF llCorner = new PointF(ev.MarginBounds.Width / 3 * 2, ev.MarginBounds.Height);
@@ -488,7 +548,20 @@ namespace QC_Vision
                     urCorner.Y = ulCorner.Y;
                     llCorner.X = ulCorner.X;
                     llCorner.Y = ev.MarginBounds.Height / 7 * (1 + ((printedCubbys % 6 == 0) ? 6 : printedCubbys % 6));
-                    image = Image.FromFile(getImageLocation(dataReader.GetString("timestamp")));
+
+
+
+                    //Find whether part is a stem or housing
+                    if (partLabel.Text.Substring(0, 2) == "04")
+                    {
+                        filepath = "Q:\\LoggedImages\\StemCavityNumber";
+                    }
+                    else
+                    {
+                        filepath = "Q:\\LoggedImages\\HousingFrontCavityNumber";
+                    }
+
+                    image = Image.FromFile(getImageLocation(dataReader.GetString("timestamp"), filepath));
                     PointF[] imageLoc = { ulCorner, urCorner, llCorner };
                     ev.Graphics.DrawImage(image, imageLoc);
                     urCorner.X += 3;
