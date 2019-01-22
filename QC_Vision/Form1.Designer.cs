@@ -960,7 +960,7 @@
             this.topLeftPic.Location = new System.Drawing.Point(1078, 23);
             this.topLeftPic.Name = "topLeftPic";
             this.topLeftPic.Size = new System.Drawing.Size(250, 250);
-            this.topLeftPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.topLeftPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.topLeftPic.TabIndex = 84;
             this.topLeftPic.TabStop = false;
             // 
@@ -969,7 +969,7 @@
             this.topRightPic.Location = new System.Drawing.Point(1393, 23);
             this.topRightPic.Name = "topRightPic";
             this.topRightPic.Size = new System.Drawing.Size(250, 250);
-            this.topRightPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.topRightPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.topRightPic.TabIndex = 85;
             this.topRightPic.TabStop = false;
             // 
@@ -978,7 +978,7 @@
             this.botLeftPic.Location = new System.Drawing.Point(1078, 329);
             this.botLeftPic.Name = "botLeftPic";
             this.botLeftPic.Size = new System.Drawing.Size(250, 250);
-            this.botLeftPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.botLeftPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.botLeftPic.TabIndex = 86;
             this.botLeftPic.TabStop = false;
             // 
@@ -987,7 +987,7 @@
             this.botRightPic.Location = new System.Drawing.Point(1393, 329);
             this.botRightPic.Name = "botRightPic";
             this.botRightPic.Size = new System.Drawing.Size(250, 250);
-            this.botRightPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.botRightPic.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.botRightPic.TabIndex = 87;
             this.botRightPic.TabStop = false;
             // 
